@@ -20,7 +20,7 @@ const verifyJWT = (req, res, next) => {
   const token = authorization?.split(" ")[1];
   jwt.verify(token, process.env.ASSESS_SECRET, (err, decoded) => {
     if (err) {
-      return res.status(403).send({ message: "Forbidden acess" });
+      return res.status(403).send({ message: "Forbidden access" });
     }
     req.decoded = decoded;
     next();
@@ -63,14 +63,14 @@ async function run() {
 
     // middleware for admin and instructor
     const verifyAdmin = async (req, res, next) => {
-      const email = req.decoded.emial;
+      const email = req.decoded.email;
       const query = { email: email };
 
       const user = await usersCollection.findOne(query);
       if (user.role === "admin") {
         next();
       } else {
-        return res.status(401).send({ message: "forbidden access" });
+        return res.status(403).send({ message: "Forbidden access" });
       }
     };
 
@@ -111,12 +111,48 @@ async function run() {
       res.send(result);
     });
 
+    //checking user is exist or not through
+    app.get("/check-user/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email }; // Ensure this is a string-based query
+
+      try {
+        const result = await usersCollection.findOne(query); // This looks for a user by email
+        if (result) {
+          return res.status(200).send(result);
+        } else {
+          return res.status(404).send({ message: "User not found" });
+        }
+      } catch (error) {
+        return res
+          .status(500)
+          .send({ message: "Server error", error: error.message });
+      }
+    });
+
     app.delete("/delete-user/:id", verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await usersCollection.deleteOne(query);
       res.send(result);
     });
+
+    app.delete(
+      "/delete-instructor-classes/:id",
+      verifyJWT,
+      verifyAdmin,
+      async (req, res) => {
+        const instructorId = req.params.id;
+        try {
+          const result = await classesCollection.deleteMany({
+            instructorId: instructorId,
+          });
+          res.send(result);
+        } catch (error) {
+          res.status(500).send("Error deleting instructor's classes");
+        }
+      }
+    );
 
     app.put("/update-user/:id", verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
@@ -140,6 +176,11 @@ async function run() {
       );
     });
 
+    // app.get("/all-users", verifyJWT, verifyAdmin, async (req, res) => {
+    //   const users = await usersCollection.find().toArray();
+    //   res.send(users);
+    // });
+
     // classes routes here
     app.post("/new-class", verifyJWT, verifyInstructor, async (req, res) => {
       const newClass = req.body;
@@ -153,6 +194,35 @@ async function run() {
       const result = await classesCollection.find(query).toArray();
       res.send(result);
     });
+
+    // meethod to change the status
+    app.patch(
+      "/change-user-status/:id",
+      verifyJWT,
+      verifyAdmin,
+      async (req, res) => {
+        const id = req.params.id;
+        const { status, reason } = req.body;
+        const filter = { _id: new ObjectId(id) };
+        const updateDoc = {
+          $set: {
+            status: status,
+            reason: reason,
+          },
+        };
+        const result = await appliedCollection.updateOne(filter, updateDoc);
+
+        if (status === "approved") {
+          const application = await appliedCollection.findOne(filter);
+          await usersCollection.updateOne(
+            { email: application.email },
+            { $set: { role: "instructor" } }
+          );
+        }
+
+        res.send(result);
+      }
+    );
 
     //get classes by instructor email address
     app.get(
@@ -238,11 +308,46 @@ async function run() {
       res.send(result);
     });
 
-    // cart routes !----
-    app.post("/add-to-cart", verifyJWT, async (req, res) => {
-      const newCartItem = req.body;
-      const result = await cartCollection.insertOne(newCartItem);
+    //delete class
+    app.delete("/class/:id", verifyJWT, verifyInstructor, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await classesCollection.deleteOne(query);
       res.send(result);
+    });
+
+    // cart routes !----
+    // app.post("/add-to-cart", verifyJWT, async (req, res) => {
+    //   const newCartItem = req.body;
+    //   const result = await cartCollection.insertOne(newCartItem);
+    //   res.send(result);
+    // });
+
+    app.post("/add-to-cart", verifyJWT, async (req, res) => {
+      const { classId, userMail } = req.body;
+
+      // Check if already in cart
+      const cartItem = await cartCollection.findOne({ classId, userMail });
+      if (cartItem) {
+        return res.status(400).json({ message: "Already in cart" });
+      }
+
+      // Check if already enrolled
+      const enrolledItem = await enrolledCollection.findOne({
+        classId,
+        userEmail: userMail,
+      });
+      if (enrolledItem) {
+        return res.status(400).json({ message: "Already enrolled" });
+      }
+
+      // Add to cart
+      const result = await cartCollection.insertOne({
+        classId,
+        userMail,
+        date: new Date(),
+      });
+      res.status(200).json({ message: "Successfully added to cart" });
     });
 
     // get cart item by id
@@ -261,18 +366,78 @@ async function run() {
     });
 
     // cart information by user email
+    // app.get("/cart/:email", verifyJWT, async (req, res) => {
+    //   const email = req.params.email;
+    //   const query = { userMail: email };
+    //   const projection = { classId: 1 };
+    //   const carts = await cartCollection
+    //     .find(query, {
+    //       projection: projection,
+    //     })
+    //     .toArray();
+    //   const classIds = carts.map((cart) => new ObjectId(cart.classId));
+    //   const query2 = { _id: { $in: classIds } };
+    //   const result = await classesCollection.find(query2).toArray();
+    //   res.send(result);
+    // });
+
     app.get("/cart/:email", verifyJWT, async (req, res) => {
+      console.log("Request params:", req.params); // Log the request params
       const email = req.params.email;
+      console.log("Email parameter:", email); // Log the email parameter
+
+      if (!email) {
+        return res.status(400).send({ message: "Email parameter is missing" });
+      }
+
       const query = { userMail: email };
-      const projection = { classId: 1 };
-      const carts = await cartCollection.find(query, {
-        projection: projection,
-      });
-      const classIds = carts.map((cart) => new ObjectId(cart.classId));
-      const query2 = { _id: { $in: classIds } };
-      const result = await classesCollection.find(query2).toArray();
-      res.send(result);
+      try {
+        const carts = await cartCollection.find(query).toArray();
+        console.log("Cart items:", carts);
+
+        // Ensure all classIds are ObjectId before querying
+        const classIds = carts.map((cart) => new ObjectId(cart.classId));
+        console.log("Cart ids:", classIds);
+
+        const result = await classesCollection
+          .find({ _id: { $in: classIds } })
+          .toArray();
+        res.send(result);
+        console.log("result:", result);
+      } catch (error) {
+        console.error("Database Error:", error);
+        res.status(500).send({ message: "Internal server error" });
+      }
     });
+
+    // app.get("/cart/:email", verifyJWT, async (req, res) => {
+    //   try {
+    //     const email = req.params.email;
+
+    //     // Fetch cart items for the user
+    //     const carts = await cartCollection
+    //       .find({ userMail: email }, { projection: { classId: 1 } })
+    //       .toArray();
+
+    //     if (carts.length === 0) {
+    //       // If no cart items found, return an empty array
+    //       return res.status(200).send([]);
+    //     }
+
+    //     // Extract class IDs from the cart items
+    //     const classIds = carts.map((cart) => new ObjectId(cart.classId));
+
+    //     // Find classes with the corresponding class IDs
+    //     const result = await classesCollection
+    //       .find({ _id: { $in: classIds } })
+    //       .toArray();
+
+    //     res.status(200).send(result);
+    //   } catch (error) {
+    //     console.error("Error fetching cart data:", error);
+    //     res.status(500).send({ message: "Failed to fetch cart data", error });
+    //   }
+    // });
 
     //delete cart item
     app.delete("/delete-cart-item/:id", verifyJWT, async (req, res) => {
@@ -457,7 +622,7 @@ async function run() {
         { $match: query },
         {
           $lookup: {
-            form: "classes",
+            from: "classes",
             localField: "classesId",
             foreignField: "_id",
             as: "classes",
@@ -468,7 +633,7 @@ async function run() {
         },
         {
           $lookup: {
-            form: "users",
+            from: "users",
             localField: "classes.instructorEmail",
             foreignField: "email",
             as: "instructor",
@@ -489,15 +654,79 @@ async function run() {
       res.send(result);
     });
 
-    app.post("/ass-instructor", async (req, res) => {
+    // app.get("/enrolled-classes/:email", verifyJWT, async (req, res) => {
+    //   try {
+    //     const email = req.params.email;
+
+    //     // Define the query variable here
+    //     const query = { userEmail: email };
+
+    //     const pipeline = [
+    //       { $match: query },
+    //       {
+    //         $lookup: {
+    //           from: "classes", // changed from 'form' to 'from'
+    //           localField: "classesId",
+    //           foreignField: "_id",
+    //           as: "classes",
+    //         },
+    //       },
+    //       {
+    //         $unwind: "$classes",
+    //       },
+    //       {
+    //         $lookup: {
+    //           from: "users", // changed from 'form' to 'from'
+    //           localField: "classes.instructorEmail",
+    //           foreignField: "email",
+    //           as: "instructor",
+    //         },
+    //       },
+    //       {
+    //         $project: {
+    //           _id: 0,
+    //           instructor: {
+    //             $arrayElemAt: ["$instructor", 0],
+    //           },
+    //           classes: 1,
+    //         },
+    //       },
+    //     ];
+
+    //     const result = await enrolledCollection.aggregate(pipeline).toArray();
+    //     res.send(result);
+    //   } catch (error) {
+    //     console.error("Failed to connect to MongoDB:", error);
+    //     res.status(500).send("Internal Server Error");
+    //   }
+    // });
+
+    app.post("/as-instructor", async (req, res) => {
       const data = req.body;
       const result = await appliedCollection.insertOne(data);
       res.send(result);
     });
 
+    app.delete(
+      "/delete-application/:id",
+      verifyJWT,
+      verifyAdmin,
+      async (req, res) => {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await appliedCollection.deleteOne(query);
+        res.send(result);
+      }
+    );
+
     app.get("/applied-instructors/:email", async (req, res) => {
       const email = req.params.email;
-      const result = await appliedCollectionfindOne({ email });
+      const result = await appliedCollection.findOne({ email });
+      res.send(result);
+    });
+
+    app.get("/applied-instructors", async (req, res) => {
+      const result = await appliedCollection.find().toArray();
       res.send(result);
     });
 

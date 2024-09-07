@@ -1,41 +1,23 @@
-import React, { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import axios from "axios";
 
-const useAxiosFetch = () => {
-  const axiosInstance = axios.create({
-    baseURL: "http://localhost:3000/",
-  });
+const useAxiosFetch = (baseURL = "http://localhost:3000/") => {
+  const axiosInstance = useMemo(() => axios.create({ baseURL }), [baseURL]);
 
   useEffect(() => {
-    //request interceptor
-    const requestInterceptor = axios.interceptors.request.use(
-      function (config) {
-        // Do something before request is sent
-        return config;
-      },
-      function (error) {
-        // Do something with request error
-        return Promise.reject(error);
-      }
+    const requestInterceptor = axiosInstance.interceptors.request.use(
+      (config) => config,
+      (error) => Promise.reject(error)
     );
 
-    // responce interceptor
-    const responceInterceptor = axios.interceptors.response.use(
-      function (response) {
-        // Any status code that lie within the range of 2xx cause this function to trigger
-        // Do something with response data
-        return response;
-      },
-      function (error) {
-        // Any status codes that falls outside the range of 2xx cause this function to trigger
-        // Do something with response error
-        return Promise.reject(error);
-      }
+    const responseInterceptor = axiosInstance.interceptors.response.use(
+      (response) => response,
+      (error) => Promise.reject(error)
     );
 
     return () => {
       axiosInstance.interceptors.request.eject(requestInterceptor);
-      axiosInstance.interceptors.request.eject(responceInterceptor);
+      axiosInstance.interceptors.response.eject(responseInterceptor);
     };
   }, [axiosInstance]);
 

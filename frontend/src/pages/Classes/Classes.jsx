@@ -3,8 +3,7 @@ import useAxiosFetch from "../../hooks/useAxiosFetch";
 import { Transition } from "@headlessui/react";
 import { Link, useNavigate } from "react-router-dom";
 import useUser from "../../hooks/useUser";
-import useAxioxSecure from "../../hooks/useAxioxSecure";
-import { toast } from "react-toastify";
+import useAxiosSecure from "../../hooks/useAxiosSecure";
 
 const Classes = () => {
   const [classes, setClasses] = useState([]);
@@ -13,7 +12,7 @@ const Classes = () => {
   const [enrolledClasses, setEnrolledClasses] = useState([]);
   const [hoveredCard, setHoveredCard] = useState(null);
   const axiosFetch = useAxiosFetch();
-  const axiosSecure = useAxioxSecure(); // Make sure to use it if needed
+  const axiosSecure = useAxiosSecure();
   const navigate = useNavigate();
 
   const handleHover = (index) => {
@@ -25,44 +24,57 @@ const Classes = () => {
       .get("/classes")
       .then((res) => setClasses(res.data))
       .catch((err) => console.error("Failed to fetch classes:", err));
-  }, [axiosFetch]); // Add axiosFetch to dependencies if it's a dependency
+  }, [axiosFetch]);
 
+  // const handleSelect = (id) => {
+  //   // axiosSecure
+  //   //   .get(`/enrolled-classes/${currentUser?.email}`)
+  //   //   .then((res) => setEnrolledClasses(res.data))
+  //   //   .catch((err) => console.log(err));
+
+  //   if (!currentUser) {
+  //     alert("Please Login First");
+  //     return navigate("/login");
+  //   }
+
+  //   // .get(`/cart-item/${id}?email=${currentUser?.email}`)
+  //   axiosSecure.get(`/cart-item/${id}`).then((res) => {
+  //     console.log(res.data.classId);
+  //     console.log("id", id);
+
+  //     if (String(res.data.classId) === String(id)) {
+  //       return alert("Already Selected");
+  //     } else if (enrolledClasses.find((item) => item.classes._id === id)) {
+  //       return alert("Already enrolled");
+  //     } else {
+  //       const data = {
+  //         classId: id,
+  //         userMail: currentUser?.email,
+  //         date: new Date(),
+  //       };
+
+  //       axiosSecure.post("/add-to-cart", data).then((res) => {
+  //         alert("Successfully added to the cart");
+  //         console.log(res.data);
+  //       });
+  //     }
+  //   });
+  // };
 
   const handleSelect = (id) => {
-    axiosSecure
-      .get(`/enrolled-classes/${currentUser?.email}`)
-      .then((res) => setEnrolledClasses(res.data))
-      .catch((err) => console.log(err));
-
     if (!currentUser) {
       alert("Please Login First");
-
       return navigate("/login");
     }
 
-    axiosSecure.get(`/cart-item/${id}?email=${currentUser?.email}`).then(res => {
-      if (res.data.classId === id){
-        return alert("Already Selected")
-      }
-      else if (enrolledClasses.find(item => item.classes._id === id)){
-        return alert("Alredy enrolled")
-      }
-      else {
-        const data = {
-          classId: id,
-          userMail: currentUser?.email,
-          date: new Date()
-        }
-
-        axiosSecure.post('/add-to-cart', data).then (res => {
-          alert("Succesfully added to the cart")
-          console.log(res.data)
-        })
-      }
-    })
-    }
-
-
+    axiosSecure
+      .post("/add-to-cart", { classId: id, userMail: currentUser.email })
+      .then((res) => {
+        alert("Successfully added to the cart");
+      })
+      .catch((err) => {
+        alert(err.response.data.message);
+      });
   };
 
   return (
@@ -98,16 +110,21 @@ const Classes = () => {
               <Transition show={hoveredCard === index}>
                 <div className="absolute inset-0 flex items-center justify-center transition duration-300 ease-in">
                   <button
-                    onClick={() => handleSelect(cls._id)}
+                    onClick={() => {
+                      console.log(cls._id);
+                      handleSelect(cls._id);
+                    }}
                     title={
-                      role == "admin" || role === "instructor"
-                        ? "Instructor/Admin Can not be able to select"
-                          ? cls.availableSeats < 1
-                          : "No Seat Availabel"
+                      role === "admin" || role === "instructor"
+                        ? "Instructor/Admin Cannot Select"
+                        : cls.availableSeats < 1
+                        ? "No Seats Available"
                         : "You Can Select Classes"
                     }
                     disabled={
-                      role === "admin" || "instructor" || cls.availableSeats < 1
+                      role === "admin" ||
+                      role === "instructor" ||
+                      cls.availableSeats < 1
                     }
                     className="px-4 py-2 text-white disabled:bg-red-300 bg-secondary duration-300 rounded hover:bg-red-700"
                   >
@@ -129,7 +146,7 @@ const Classes = () => {
                   ${cls.price}
                 </span>
               </div>
-              <Link to={`/class/${cls._id}`}>
+              <Link to={`/class/${cls._id}`} state={{ classDetails: cls }}>
                 <button className="px-4 py-2 my-4 mb-2 w-full mx-auto text-white disabled:bg-red-300 bg-secondary duration-300 rounded hover:bg-red-700">
                   View
                 </button>

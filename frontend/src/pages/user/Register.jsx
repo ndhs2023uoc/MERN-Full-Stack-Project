@@ -44,7 +44,7 @@ const Register = () => {
 
             if (user.email && user.displayName) {
               return axios
-                .post("http://localhost:5000/new-user", userImp)
+                .post("http://localhost:3000/new-user", userImp)
                 .then(() => {
                   setError("");
                   navigate("/");

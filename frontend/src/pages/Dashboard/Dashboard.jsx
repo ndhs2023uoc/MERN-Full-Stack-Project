@@ -1,3 +1,4 @@
+import useUser from "../../hooks/useUser";
 import DashboardNavigate from "../../routes/DashboardNavigate";
 
 const Dashboard = () => {

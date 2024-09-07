@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { ThemeProvider, THEME_ID, createTheme } from "@mui/material/styles";
 import { useLocation } from "react-router-dom";
@@ -6,6 +6,8 @@ import Switch from "@mui/material/Switch";
 import photoURL from "../../assets/home/girl.jpg";
 import { FaBars } from "react-icons/fa";
 import { motion } from "framer-motion";
+import { AuthContext } from "../../utilities/providors/AuthProvider";
+import Swal from "sweetalert2";
 
 const navLinks = [
   { name: "Home", route: "/" },
@@ -35,7 +37,7 @@ const NavBar = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [navBg, setNavBg] = useState("bg-[$15151580]");
   // const [user, setUser] = useState(false);
-  const user = true;
+  const { logout, user } = useContext(AuthContext);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -88,8 +90,31 @@ const NavBar = () => {
     }
   }, [scrollPosition]);
 
-  const handleLogout = () => {
-    console.log("Logged out");
+  const handleLogout = (e) => {
+    e.preventDefault(); //to make shuwer refresh not comes
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, Logout me!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        logout()
+          .then(() => {
+            Swal.fire({
+              title: "Logged Out!",
+              text: "Successfully Logged Out.",
+              icon: "success",
+            });
+          })
+          .catch((err) => {
+            Swal.fire("Error!", err.message, "error");
+          });
+      }
+    });
   };
 
   return (
@@ -199,7 +224,7 @@ const NavBar = () => {
                 {user && (
                   <li>
                     <NavLink
-                      to="/dashboad"
+                      to="/dashboard"
                       className={({ isActive }) =>
                         `font-bold ${
                           isActive

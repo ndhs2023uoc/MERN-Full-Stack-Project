@@ -8,7 +8,7 @@ import useAuth from "../../hooks/useAuth";
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const location = useLocation();
-  const { Login, error, setError, loader, setLoader } = useAuth();
+  const { login, error, setError, loader, setLoader } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = (e) => {
@@ -17,8 +17,7 @@ const Login = () => {
 
     const data = new FormData(e.target);
     const formData = Object.fromEntries(data);
-    // console.log(formData);
-    Login(formData.email, formData.password)
+    login(formData.email, formData.password)
       .then(() => {
         navigate(location.state?.from || "/dashboard");
       })
@@ -34,13 +33,14 @@ const Login = () => {
         Get Started Today
       </h1>
       <p className="mx-auto mt-4 max-w-md text-gray-500 ">
-        Explore our library of courses. "ticuiously crafted to cater to all
+        Explore our library of courses. Meticulously crafted to cater to all
         levels of expertise.
       </p>
 
       <div className="mx-auto max-w-lg mb-0 mt-6 rounded-lg p-4 shadow-lg sm:p-6 lg:p-8 ">
-        <form onSubmit={handleSubmit()} className="space-y-4 ">
-          <p className=" text-center text-red-400 ">Sign in to your account</p>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <p className="text-center text-red-400">Sign in to your account</p>
+          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
           <div>
             <label htmlFor="email" className="sr-only">
               Email
@@ -50,9 +50,8 @@ const Login = () => {
                 type="email"
                 name="email"
                 placeholder="Enter email "
-                className="w-full border outline-none rounded-lg  border-gray-200 p-4 pe-12 text-sm shadow-sm"
+                className="w-full border outline-none rounded-lg border-gray-200 p-4 pe-12 text-sm shadow-sm"
               />
-
               <span
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute inset-y-0 end-0 grid place-content-center"
@@ -70,7 +69,7 @@ const Login = () => {
                   type={showPassword ? "text" : "password"}
                   name="password"
                   placeholder="Enter password "
-                  className="w-full border outline-none rounded-lg  border-gray-200 p-4 pe-12 text-sm shadow-sm"
+                  className="w-full border outline-none rounded-lg border-gray-200 p-4 pe-12 text-sm shadow-sm"
                 />
                 <span
                   onClick={() => setShowPassword(!showPassword)}

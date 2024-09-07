@@ -22,23 +22,55 @@ const AuthProvider = ({ children }) => {
 
   //sign - up new user
 
+  // const signUp = async (email, password) => {
+  //   try {
+  //     setLoader(true);
+  //     return await createUserWithEmailAndPassword(auth, email, password);
+  //   } catch (error) {
+  //     setError(error.code);
+  //     throw error;
+  //   }
+  // };
+
   const signUp = async (email, password) => {
     try {
       setLoader(true);
       return await createUserWithEmailAndPassword(auth, email, password);
     } catch (error) {
-      setError(error.code);
+      setError(error.message); // Use error.message
       throw error;
+    } finally {
+      setLoader(false);
     }
   };
 
+  // const login = async (email, password) => {
+  //   try {
+  //     setLoader(true);
+  //     return await signInWithEmailAndPassword(auth, email, password);
+  //   } catch (error) {
+  //     setError(error.code);
+  //     throw error;
+  //   }
+  // };
+
   const login = async (email, password) => {
     try {
+      console.log("Attempting to log in with email:", email);
       setLoader(true);
-      return await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      console.log("Login successful:", userCredential);
+      return userCredential;
     } catch (error) {
-      setError(error.code);
+      console.error("Login error:", error.message);
+      setError(error.message);
       throw error;
+    } finally {
+      setLoader(false);
     }
   };
 

@@ -1,15 +1,23 @@
 import React, { useState } from "react";
-import useAuth from "../../hooks/useAuth";
-import useUser from "../../hooks/useUser";
 import { BiHomeAlt, BiLogInCircle, BiSelectMultiple } from "react-icons/bi";
+import useUser from "../hooks/useUser";
 import { FaHome, FaUsers } from "react-icons/fa";
+import { IoSchoolSharp } from "react-icons/io5";
 import { SiGoogleclassroom, SiInstructure } from "react-icons/si";
 import { BsFillPostageFill } from "react-icons/bs";
 import { TbBrandAppleArcade } from "react-icons/tb";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
+import Spinner from "react-bootstrap/Spinner";
 import Swal from "sweetalert2";
-import { MdExplore, MdPayment, MdPendingActions } from "react-icons/md";
+import {
+  MdDoneAll,
+  MdExplore,
+  MdPayment,
+  MdPendingActions,
+} from "react-icons/md";
 import Scroll from "../hooks/useScroll";
+import useAuth from "../hooks/useAuth";
+import UpdateProfile from "../pages/UpdateProfile";
 
 const adminNavItems = [
   {
@@ -39,60 +47,60 @@ const adminNavItems = [
 
 const instructorsNavItems = [
   {
-    to: "/dahboard/instructor-cp",
+    to: "/dashboard/instructor-cp",
     icon: <FaHome className="text-2xl" />,
     label: "Home",
   },
   {
-    to: "/dahboard/add-class",
+    to: "/dashboard/add-class",
     icon: <MdExplore className="text-2xl" />,
     label: "Add a class",
   },
   {
-    to: "/dahboard/my-classes",
+    to: "/dashboard/my-classes",
     icon: <IoSchoolSharp className="text-2xl" />,
     label: "My Classes",
   },
   {
-    to: "/dahboard/my-pending",
+    to: "/dashboard/my-pending",
     icon: <MdPendingActions className="text-2xl" />,
     label: "Pending Courses",
   },
   {
-    to: "/dahboard/my-approved",
-    icon: <IoDoneAll className="text-2xl" />,
+    to: "/dashboard/my-approved",
+    icon: <MdDoneAll className="text-2xl" />,
     label: "Approved Classes",
   },
 ];
 
 const studentsNavItems = [
   {
-    to: "/dahboard/student-cp",
+    to: "/dashboard/student-cp",
     icon: <BiHomeAlt className="text-2xl" />,
     label: "Dashboard",
   },
   {
-    to: "/dahboard/enrolled-classes",
+    to: "/dashboard/enrolled-classes",
     icon: <SiGoogleclassroom className="text-2xl" />,
-    label: "My Enroll",
+    label: "My Enrolled Classes",
   },
+  // {
+  //   to: "/dashboard/my-classes",
+  //   icon: <IoSchoolSharp className="text-2xl" />,
+  //   label: "My Classes",
+  // },
   {
-    to: "/dahboard/my-classes",
-    icon: <IoSchoolSharp className="text-2xl" />,
-    label: "My Classes",
-  },
-  {
-    to: "/dahboard/my-selected",
+    to: "/dashboard/my-selected",
     icon: <BiSelectMultiple className="text-2xl" />,
     label: "My Selected",
   },
   {
-    to: "/dahboard/my-payment",
+    to: "/dashboard/my-payment",
     icon: <MdPayment className="text-2xl" />,
     label: "Payment History",
   },
   {
-    to: "/dahboard/apply-instructor",
+    to: "/dashboard/apply-instructor",
     icon: <SiInstructure className="text-2xl" />,
     label: "Apply for Instructor",
   },
@@ -105,9 +113,9 @@ const lastMenuItems = [
     label: "Main Home",
   },
   {
-    to: "/trending",
+    to: "/update-profile",
     icon: <BiHomeAlt className="text-2xl" />,
-    label: "Trending",
+    label: "Update Profile",
   },
   {
     to: "/browse",
@@ -149,11 +157,12 @@ const DashBoardLayout = () => {
   };
 
   if (loader) {
-    return;
-    <div className="flex justify-center items-center h-screen">
-      <HashLoader color="#36d7b7" />{" "}
-      {/*react spinner serch the webloader will replace here */}
-    </div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Spinner animation="border" role="status" />{" "}
+        {/*react spinner serch the webloader will replace here */}
+      </div>
+    );
   }
 
   return (
@@ -161,7 +170,7 @@ const DashBoardLayout = () => {
       <div
         className={`${
           open ? "w-72 overflow-y-auto" : "w-[90px] overflow-auto"
-        } bg-purple-200 h-screen p-5 md:block hidden pt-8 relative duration-300`}
+        } bg-blue-200 h-screen p-5 md:block hidden pt-8 relative duration-300`}
       >
         <div className="flex gap-x-4 items-center">
           <img
@@ -192,31 +201,33 @@ const DashBoardLayout = () => {
 
             {role === "admin" &&
               adminNavItems.map((menuItem, index) => {
-                <li key={index} className="mb-2">
-                  <NavLink
-                    to={menuItem.to}
-                    className={({ isActive }) =>
-                      `flex ${
-                        isActive ? "bg-red-500 text-white" : "text-[#413F44"
-                      } duration-250 rounded-md p-2 cursor-pointer hover:bg-secondary hover:text-white font-bold text-sm items-center gap-x-4`
-                    }
-                  >
-                    {menuItem.icon}
-                    <span
-                      className={`${
-                        !open && "hidden"
-                      } origin-left duration-200`}
+                return (
+                  <li key={index} className="mb-2">
+                    <NavLink
+                      to={menuItem.to}
+                      className={({ isActive }) =>
+                        `flex ${
+                          isActive ? "bg-red-500 text-white" : "text-[#413F44"
+                        } duration-250 rounded-md p-2 cursor-pointer hover:bg-secondary hover:text-white font-bold text-sm items-center gap-x-4`
+                      }
                     >
-                      {menuItem.label}
-                    </span>
-                  </NavLink>
-                </li>;
+                      {menuItem.icon}
+                      <span
+                        className={`${
+                          !open && "hidden"
+                        } origin-left duration-200`}
+                      >
+                        {menuItem.label}
+                      </span>
+                    </NavLink>
+                  </li>
+                );
               })}
           </ul>
         )}
 
         {/* Nav links -> instructor */}
-        {role === "user" && (
+        {role === "instructor" && (
           <ul className="pt-6 ">
             <p className={`ml-3 text-gray-500 ${!open && "hidden"}`}>
               <small>Menu</small>
@@ -224,25 +235,27 @@ const DashBoardLayout = () => {
 
             {role === "instructor" &&
               instructorsNavItems.map((menuItem, index) => {
-                <li key={index} className="mb-2">
-                  <NavLink
-                    to={menuItem.to}
-                    className={({ isActive }) =>
-                      `flex ${
-                        isActive ? "bg-red-500 text-white" : "text-[#413F44"
-                      } duration-250 rounded-md p-2 cursor-pointer hover:bg-secondary hover:text-white font-bold text-sm items-center gap-x-4`
-                    }
-                  >
-                    {menuItem.icon}
-                    <span
-                      className={`${
-                        !open && "hidden"
-                      } origin-left duration-200`}
+                return (
+                  <li key={index} className="mb-2">
+                    <NavLink
+                      to={menuItem.to}
+                      className={({ isActive }) =>
+                        `flex ${
+                          isActive ? "bg-red-500 text-white" : "text-[#413F44"
+                        } duration-250 rounded-md p-2 cursor-pointer hover:bg-secondary hover:text-white font-bold text-sm items-center gap-x-4`
+                      }
                     >
-                      {menuItem.label}
-                    </span>
-                  </NavLink>
-                </li>;
+                      {menuItem.icon}
+                      <span
+                        className={`${
+                          !open && "hidden"
+                        } origin-left duration-200`}
+                      >
+                        {menuItem.label}
+                      </span>
+                    </NavLink>
+                  </li>
+                );
               })}
           </ul>
         )}
@@ -256,31 +269,33 @@ const DashBoardLayout = () => {
 
             {role === "user" &&
               studentsNavItems.map((menuItem, index) => {
-                <li key={index} className="mb-2">
-                  <NavLink
-                    to={menuItem.to}
-                    className={({ isActive }) =>
-                      `flex ${
-                        isActive ? "bg-red-500 text-white" : "text-[#413F44"
-                      } duration-250 rounded-md p-2 cursor-pointer hover:bg-secondary hover:text-white font-bold text-sm items-center gap-x-4`
-                    }
-                  >
-                    {menuItem.icon}
-                    <span
-                      className={`${
-                        !open && "hidden"
-                      } origin-left duration-200`}
+                return (
+                  <li key={index} className="mb-2">
+                    <NavLink
+                      to={menuItem.to}
+                      className={({ isActive }) =>
+                        `flex ${
+                          isActive ? "bg-red-500 text-white" : "text-[#413F44"
+                        } duration-250 rounded-md p-2 cursor-pointer hover:bg-secondary hover:text-white font-bold text-sm items-center gap-x-4`
+                      }
                     >
-                      {menuItem.label}
-                    </span>
-                  </NavLink>
-                </li>;
+                      {menuItem.icon}
+                      <span
+                        className={`${
+                          !open && "hidden"
+                        } origin-left duration-200`}
+                      >
+                        {menuItem.label}
+                      </span>
+                    </NavLink>
+                  </li>
+                );
               })}
           </ul>
         )}
 
         {/*  */}
-        <ul pt-6>
+        <ul className="pt-6">
           <p
             className={`ml-3 mb-3 text-gray-500 uppercase ${!open && "hidden"}`}
           >
@@ -288,29 +303,31 @@ const DashBoardLayout = () => {
           </p>
 
           {lastMenuItems.map((menuItem, index) => {
-            <li key={index} className="mb-2">
-              <NavLink
-                to={menuItem.to}
-                className={({ isActive }) =>
-                  `flex ${
-                    isActive ? "bg-red-500 text-white" : "text-[#413F44"
-                  } duration-250 rounded-md p-2 cursor-pointer hover:bg-secondary hover:text-white font-bold text-sm items-center gap-x-4`
-                }
-              >
-                {menuItem.icon}
-                <span
-                  className={`${!open && "hidden"} origin-left duration-200`}
+            return (
+              <li key={index} className="mb-2">
+                <NavLink
+                  to={menuItem.to}
+                  className={({ isActive }) =>
+                    `flex ${
+                      isActive ? "bg-red-500 text-white" : "text-[#413F44"
+                    } duration-250 rounded-md p-2 cursor-pointer hover:bg-secondary hover:text-white font-semibold text-sm items-center gap-x-4`
+                  }
                 >
-                  {menuItem.label}
-                </span>
-              </NavLink>
-            </li>;
+                  {menuItem.icon}
+                  <span
+                    className={`${!open && "hidden"} origin-left duration-200`}
+                  >
+                    {menuItem.label}
+                  </span>
+                </NavLink>
+              </li>
+            );
           })}
 
           <li>
             <button
               onClick={() => handleLogOut()}
-              className="duration-250 rounded-md p-2 cursor-pointer hover:bg-secondary hover:text-white font-bold text-sm items-center gap-x-4"
+              className="duration-250 rounded-md p-2 cursor-pointer hover:bg-secondary hover:text-white font-bold text-sm items-center gap-x-4 flex flex-col-2"
             >
               <BiLogInCircle className="text-2xl" />
               <span className={`${!open && "hidden"} origin-left duration-200`}>
@@ -321,7 +338,7 @@ const DashBoardLayout = () => {
         </ul>
       </div>
 
-      <div>
+      <div className="h-screen overflow-y-auto px-8 flex-1">
         <Scroll />
         <Outlet />
       </div>

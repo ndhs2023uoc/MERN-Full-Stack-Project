@@ -9,11 +9,23 @@ import Register from "../pages/user/Register";
 import SingleClass from "../pages/Classes/SingleClass";
 import DashBoardLayout from "../layout/DashBoardLayout";
 import Dashboard from "../pages/Dashboard/Dashboard";
-import StudentCp from "../pages/Students/StudentCp";
-import EnrolledClasses from "../pages/Dashboard/Students/Enroll/EnrolledClasses";
 import SelectedClass from "../pages/Dashboard/Students/SelectedClass";
 import MyPaymentHistory from "../pages/Dashboard/Students/Payment/History/MyPaymentHistory";
 import AsInstructor from "../pages/Dashboard/Students/Apply/AsInstructor";
+import Payment from "../pages/Dashboard/Students/Payment/Payment";
+import StudentCp from "../pages/Dashboard/Students/StudentCp";
+import InstructorCp from "../pages/Dashboard/Instructor/InstructorCp";
+import AddClasses from "../pages/Dashboard/Instructor/AddClasses";
+import MyClasses from "../pages/Dashboard/Instructor/MyClasses";
+import PendingCourse from "../pages/Dashboard/Instructor/PendingCourse";
+import MyApprovedCourse from "../pages/Dashboard/Instructor/MyApprovedCourse";
+import AdminHome from "../pages/Dashboard/Admin/AdminHome";
+import ManageClasses from "../pages/Dashboard/Admin/ManageClasses";
+import EnrolledClasses from "../pages/Dashboard/Students/Enroll/EnrolledClasses";
+import EditClass from "../pages/Dashboard/Instructor/EditClass";
+import ManageUsers from "../pages/Dashboard/Admin/ManageUsers";
+import UpdateProfile from "../pages/UpdateProfile";
+import ManageApplications from "../pages/Dashboard/Admin/ManageApplications";
 
 export const router = createBrowserRouter([
   {
@@ -25,11 +37,11 @@ export const router = createBrowserRouter([
         element: <Home />,
       },
       {
-        path: "instructors",
+        path: "/instructors",
         element: <Instructors />,
       },
       {
-        path: "classes",
+        path: "/classes",
         element: <Classes />,
       },
       {
@@ -41,10 +53,14 @@ export const router = createBrowserRouter([
         element: <Register />,
       },
       {
+        path: "/update-profile",
+        element: <UpdateProfile />,
+      },
+      {
         path: "/class/:id",
         element: <SingleClass />,
         loader: ({ params }) =>
-          fetch(`http://localohost:5000/class/${params.id}`),
+          fetch(`http://localhost:3001/class/${params.id}`),
       },
     ],
   },
@@ -63,7 +79,7 @@ export const router = createBrowserRouter([
         element: <StudentCp />,
       },
       {
-        path: "enrolled-class",
+        path: "enrolled-classes",
         element: <EnrolledClasses />,
       },
       {
@@ -71,12 +87,58 @@ export const router = createBrowserRouter([
         element: <SelectedClass />,
       },
       {
-        path: "my-payments",
+        path: "my-payment",
         element: <MyPaymentHistory />,
       },
       {
         path: "apply-instructor",
         element: <AsInstructor />,
+      },
+      {
+        path: "user/payment",
+        element: <Payment />,
+      },
+      //instructor routes
+      {
+        path: "instructor-cp",
+        element: <InstructorCp />,
+      },
+      {
+        path: "add-class",
+        element: <AddClasses />,
+      },
+      {
+        path: "edit-class/:id",
+        element: <EditClass />,
+      },
+      {
+        path: "my-classes",
+        element: <MyClasses />,
+      },
+      {
+        path: "my-pending",
+        element: <PendingCourse />,
+      },
+      {
+        path: "my-approved",
+        element: <MyApprovedCourse />,
+      },
+      // admin routes
+      {
+        path: "admin-home",
+        element: <AdminHome />,
+      },
+      {
+        path: "manage-classes",
+        element: <ManageClasses />,
+      },
+      {
+        path: "manage-users",
+        element: <ManageUsers />,
+      },
+      {
+        path: "manage-applications",
+        element: <ManageApplications />,
       },
     ],
   },

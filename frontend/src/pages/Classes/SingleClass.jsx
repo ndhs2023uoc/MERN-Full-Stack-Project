@@ -1,42 +1,79 @@
-import React, { useState } from "react";
+import React from "react";
 import useUser from "../../hooks/useUser";
-import useAxiosFetch from "../../hooks/useAxiosFetch";
-import useAxiosFetch from "../../hooks/useAxiosFetch";
-import useAxioxSecure from "../../hooks/useAxioxSecure";
+import useAxiosSecure from "../../hooks/useAxiosSecure";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const SingleClass = () => {
-  const courses = useLoaderData();
+  const location = useLocation();
+  const cls = location.state?.classDetails;
   const { currentUser } = useUser();
   const role = currentUser?.role;
-  const [enrolledClasses, setEnrolledClasses] = useState([]);
-  const useAxiosFetch = useAxiosFetch();
-  const axiosSecure = useAxioxSecure();
+  const axiosSecure = useAxiosSecure();
+  const navigate = useNavigate();
+
+  const handleAddToCart = () => {
+    if (!currentUser) {
+      alert("Please Login First");
+      return navigate("/login");
+    }
+
+    axiosSecure
+      .post("/add-to-cart", { classId: cls._id, userMail: currentUser.email })
+      .then((res) => {
+        alert("Successfully added to the cart");
+      })
+      .catch((err) => {
+        alert(err.response.data.message);
+      });
+  };
+
+  if (!cls) {
+    return <div>Loading...</div>;
+  }
 
   return (
-    <>
-      <div
-        className="font-gilroy font-medium text-gray dark:text-white text-lg leading-[27px] w-[90%] mx-auto"
-        data-new-gr-c-s-check-Loaded="14.1157.0"
-        data-gr-ext-installed=""
-      >
-        <div className="breadcrumbd bg-primary py-20 mt-20 section-padding bg-cover bg-center bg-no-repeat">
-          <div className="container text-center">
-            <h2>Course Details</h2>
-          </div>
+    <div className="container mx-auto px-4 py-8 mt-20">
+      <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
+        <div className="w-full h-96 overflow-hidden">
+          <img
+            className="w-full h-full object-cover object-center"
+            src={cls.image}
+            alt={cls.name}
+          />
         </div>
-
-        <div className="nav-tab-wrapper tabs section-padding mt-8">
-          <div className="container">
-            <div className="grid-cols-12 md:gap=[30px]">{/*left side */}</div>
+        <div className="p-6">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">{cls.name}</h1>
+          <p className="text-gray-600 text-sm mb-4">
+            Instructor: {cls.instructorName}
+          </p>
+          <p className="text-gray-700 mb-4">{cls.description}</p>
+          <div className="flex justify-between items-center mb-4">
+            <span className="text-gray-600">
+              Available Seats: {cls.availableSeats}
+            </span>
+            <span className="text-green-500 font-semibold text-xl">
+              ${cls.price}
+            </span>
           </div>
+          <button
+            onClick={handleAddToCart}
+            disabled={
+              role === "admin" ||
+              role === "instructor" ||
+              cls.availableSeats < 1
+            }
+            className="w-full px-4 py-2 bg-secondary text-white rounded hover:bg-red-700 transition duration-300 disabled:bg-gray-400"
+          >
+            {role === "admin" || role === "instructor"
+              ? "Instructor/Admin Cannot Select"
+              : cls.availableSeats < 1
+              ? "No Seats Available"
+              : "Add To Cart"}
+          </button>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
 export default SingleClass;
-
-{
-  /* 1:55:18 video need to refer if there any error for now we skip this part */
-}
